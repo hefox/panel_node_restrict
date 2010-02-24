@@ -16,8 +16,7 @@ function panel_node_restrict_menu_alter(&$items) {
 function panel_node_restrict_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'prepare':
-        if ($node->type == 'panel' && !$node->panel_layout)// && !user_access("administer panel node content")) 
-        {
+        if ($node->type == 'panel' && !$node->panel_layout && !user_access("administer panel node content")){
           $node->panel_layout = variable_get("panel_node_restrict_default_layout",'flexible');
         }
       break;
