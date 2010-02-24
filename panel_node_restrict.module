@@ -1,0 +1,32 @@
+<?php
+
+function panel_node_restrict_perm(){
+  return array("administer panel node content");
+}
+
+function panel_node_restrict_menu_alter(&$items) {
+  foreach(array('node/%node/panel_layout','node/%node/panel_content','node/add/panel/choose-layout') as $path) {
+    if ($items[$path]) {
+      $items[$path]['access arguments'] = array("administer panel node content");
+      unset($items[$path]['access callback']);
+    }
+  }
+}
+
+function panel_node_restrict_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  switch ($op) {
+    case 'prepare':
+        if ($node->type == 'panel' && !$node->panel_layout)// && !user_access("administer panel node content")) 
+        {
+          $node->panel_layout = variable_get("panel_node_restrict_default_layout",'flexible');
+        }
+      break;
+    case 'load':
+      //override for translated nodes
+      if ($node->type == 'panel' && $node->tnid != $node->nid) {
+        // load the translated node
+        $node->panels_node = db_fetch_array(db_query("SELECT * FROM {panels_node} WHERE nid = %d", $node->tnid));
+      }
+      break;
+  }
+}
