@@ -1,3 +1,0 @@
-name = Panel node restrict
-description = Changes permission on panel node layout + use parent translation for  translated panel content.
-core = 6.x
