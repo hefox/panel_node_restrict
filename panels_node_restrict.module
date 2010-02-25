@@ -64,7 +64,7 @@ function panels_node_restrict_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
       if ($node->type == 'panel' 
         && module_exists('translation') 
         && variable_get("panels_node_restrict_translation_parent",TRUE) 
-        &&!empty($node->tnid) 
+        && !empty($node->tnid) 
         && $node->tnid != $node->nid) {
         // load the translated parent node display
         $panels_node = db_fetch_array(db_query("SELECT * FROM {panels_node} WHERE nid = %d", $node->tnid));
