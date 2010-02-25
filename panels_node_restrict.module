@@ -1,9 +1,36 @@
 <?php
 
+/**
+ * Implementation of hook_perm().
+ */
 function panels_node_restrict_perm(){
   return array("administer panel node content");
 }
 
+/**
+ * Implementation of hook_menu().
+ */
+function panels_node_restrict_menu() {
+  // Safety: go away if CTools is not at an appropriate version.
+  if (!defined('PANELS_REQUIRED_CTOOLS_API') || !module_invoke('ctools', 'api_version', PANELS_REQUIRED_CTOOLS_API)) {
+    return array();
+  }
+
+  $items['admin/build/panels/settings/panel-node-restrict'] = array(
+    'title' => 'Panel nodes restrict',
+    'description' => 'Configure settings for panel nodes restrict.',
+    'access arguments' => array('administer panel-nodes'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('panels_node_restrict_settings'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'panels_node_restrict.admin.inc',
+  ); 
+  return $items;
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
 function panels_node_restrict_menu_alter(&$items) {
   foreach(array('node/%node/panel_layout','node/%node/panel_content','node/add/panel/choose-layout') as $path) {
     if ($items[$path]) {
@@ -13,19 +40,61 @@ function panels_node_restrict_menu_alter(&$items) {
   }
 }
 
+/**
+ * Implementation of hook_nodeapi().
+ */
 function panels_node_restrict_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
     case 'prepare':
-        if ($node->type == 'panel' && !$node->panel_layout && !user_access("administer panel node content")){
+        if ($node->type == 'panel' && !$node->panel_layout && 
+            (
+            !user_access("administer panel node content") 
+              // user doesn't have access to panel node content/layout
+            || variable_get("panels_node_restrict_always_use_default",FALSE) == TRUE
+                // always default is enabled, so we always use a default
+            ||  (variable_get("panels_node_restrict_translation_parent",TRUE) && isset($_GET['translation'])) 
+                  // since the panel content will be ignored, we skip this stage
+            )
+          ) {
           $node->panel_layout = variable_get("panels_node_restrict_default_layout",'flexible');
         }
       break;
     case 'load':
       //override for translated nodes
-      if ($node->type == 'panel' && !empty($node->tnid) && $node->tnid != $node->nid) {
-        // load the translated node
-        $node->panels_node = db_fetch_array(db_query("SELECT * FROM {panels_node} WHERE nid = %d", $node->tnid));
+      if ($node->type == 'panel' 
+        && module_exists('translation') 
+        && variable_get("panels_node_restrict_translation_parent",TRUE) 
+        &&!empty($node->tnid) 
+        && $node->tnid != $node->nid) {
+        // load the translated parent node display
+        $panels_node = db_fetch_array(db_query("SELECT * FROM {panels_node} WHERE nid = %d", $node->tnid));
+        if ($panels_node) {
+          return array('panels_node' => $panels_node);
+        }
       }
       break;
   }
+}
+
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function panels_node_restrict_form_panels_edit_display_form_alter(&$form,$form_state) {
+
+  $panel_node = $form['#display']->context['panel-node'];
+  if (variable_get("panels_node_restrict_translation_parent",TRUE)
+    && module_exists('translation') 
+    && isset($panel_node) && !empty($panel_node->data->nid) 
+    //if panel node node nid set
+    && $panel_node->data->nid != $panel_node->data->panels_node['nid']  
+      // if node nid doesn't match panels_node nid
+    &&  $panel_node->data->panels_node['nid'] == $panel_node->data->tnid 
+      // if it does match the tnid
+     ) {
+      $form['panels_node_restrict_warning'] = array(
+        '#type' => 'markup',
+        '#value'=> t("Warning, as <a href='!url'>panels node restrict settings</a> are set to share panel content for translated panel nodes, you are editing the panel content the <a href='!node'>parent translated node</a>.", array('!url' => url('admin/build/panels/settings/panel-node-restrict'),'!node'=>url('node/'.$panel_node->data->tnid))),
+      );
+    }
 }

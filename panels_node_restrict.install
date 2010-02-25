@@ -1,0 +1,11 @@
+<?php
+
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function panels_node_restrict_uninstall() {
+  variable_del('panels_node_restrict_default_layout');
+  variable_del('panels_node_restrict_always_use_default');
+  variable_del('panels_node_restrict_translation_parent');
+}
