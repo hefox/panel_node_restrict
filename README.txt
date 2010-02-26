@@ -7,7 +7,7 @@ It achieves this end via 2 ways
 
 1) It restricts access to panels node's panel content/layout and layout selection to 
 "administer panel node content" permission, with the purpose of making making panel 
-node content/layout a super-role like task.
+node content/layout a super-administrator like task.
 2) If set to under it's setting page (admin/build/panels/settings/panel-node-restrict),
 It shares panel content/layout among nodes connected via a translation id (using the
 source translation's panel content).
