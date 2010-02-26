@@ -1,7 +1,7 @@
 Panels node restrict (panels_node_restrict)
 
-Panels node restrict serves to restrict access ease use of panels node when non-technical
-users are an issue.  
+Panels node restrict serves to ease use of panels node when non-technical
+administrator users are an issue.
 
 It achieves this end via 2 ways
 
