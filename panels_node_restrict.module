@@ -34,12 +34,18 @@ function panels_node_restrict_menu() {
 function panels_node_restrict_menu_alter(&$items) {
   foreach(array('node/%node/panel_layout','node/%node/panel_content','node/add/panel/choose-layout') as $path) {
     if ($items[$path]) {
-      $items[$path]['access arguments'] = array("administer panel node content");
-      unset($items[$path]['access callback']);
+      $items[$path]['access callback'] ='panels_node_restrict_access_check';
     }
   }
 }
 
+function panels_node_restrict_access_check($node) {
+  if (!isset($node->panels_node)) {
+    return FALSE;
+  }
+
+  return user_access("administer panel node content") && node_access('update', $node);
+}
 /**
  * Implementation of hook_nodeapi().
  */
